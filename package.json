@@ -16,5 +16,8 @@
     "url": "https://github.com/lalababa/tinyapp/issues"
   },
   "homepage": "https://github.com/lalababa/tinyapp#readme",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
 }
