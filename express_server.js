@@ -30,6 +30,13 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+app.post("/urls/:id/delete",(req,res) => {
+  const id = req.params.id;
+  //console.log(req.params.id);
+  delete urlDatabase[id];
+  res.redirect("/urls");
+}) 
+
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
