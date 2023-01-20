@@ -1,14 +1,7 @@
-////////////////////////////////////////////////////////////////////////
-/*
-SETUP
-FUNCTIONS
-VARIABLES
-*/
-
 // app config
 const express = require('express');
 const app = express();
-const PORT = 8080;
+const PORT = 7070;
 
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({extended: true}));
@@ -27,11 +20,6 @@ const { getUserByEmail, generateRandomString, urlsForUser } = require('./helpers
 const urlDatabase = {};
 const users = {};
 
-////////////////////////////////////////////////////////////////////////
-/*
-ROUTING
-*/
-
 // root - GET
 // redirects to /urls if logged in, otherwise to /login
 app.get('/', (req, res) => {
@@ -46,11 +34,12 @@ app.get('/', (req, res) => {
 // shows urls that belong to the user, if they are logged in
 app.get('/urls', (req, res) => {
   const userID = req.session.userID;
+  const user = users[userID];
   const userUrls = urlsForUser(userID, urlDatabase);
-  const templateVars = { urls: userUrls, user: users[userID] };
+  const templateVars = { urls: userUrls, user };
   
-  if (!userID) {
-    res.statusCode = 401;
+  if (!user) {
+    return res.redirect('/login');
   }
   
   res.render('urls_index', templateVars);
@@ -75,8 +64,10 @@ app.post('/urls', (req, res) => {
 // new url creation page - GET
 // validates if the user is logged in before displaying page
 app.get('/urls/new', (req, res) => {
-  if (req.session.userID) {
-    const templateVars = {user: users[req.session.userID]};
+  const userID = req.session.userID;
+  const user = users[userID];
+  if (user) {
+    const templateVars = {user};
     res.render('urls_new', templateVars);
   } else {
     res.redirect('/login');
@@ -88,15 +79,17 @@ app.get('/urls/new', (req, res) => {
 app.get('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
   const userID = req.session.userID;
+  const user = users[userID];
   const userUrls = urlsForUser(userID, urlDatabase);
-  const templateVars = { urlDatabase, userUrls, shortURL, user: users[userID] };
+  const templateVars = { urlDatabase, userUrls, shortURL, user};
+  console.log(userUrls, templateVars);
 
   if (!urlDatabase[shortURL]) {
     const errorMessage = 'This short URL does not exist.';
-    res.status(404).render('urls_error', {user: users[userID], errorMessage});
+    res.status(404).render('urls_error', {user, errorMessage});
   } else if (!userID || !userUrls[shortURL]) {
     const errorMessage = 'You are not authorized to see this URL.';
-    res.status(401).render('urls_error', {user: users[userID], errorMessage});
+    res.status(401).render('urls_error', {user, errorMessage});
   } else {
     res.render('urls_show', templateVars);
   }
@@ -144,12 +137,14 @@ app.get('/u/:shortURL', (req, res) => {
 // login page - GET
 // redirects to urls index page if already logged in
 app.get('/login', (req, res) => {
-  if (req.session.userID) {
+  const userID = req.session.userID;
+  const user = users[userID];
+  if (user) {
     res.redirect('/urls');
     return;
   }
 
-  const templateVars = {user: users[req.session.userID]};
+  const templateVars = {user};
   res.render('urls_login', templateVars);
 });
 
@@ -178,13 +173,14 @@ app.post('/logout', (req, res) => {
 // registration page - GET
 // redirects to urls index page if already logged in
 app.get('/register', (req, res) => {
-  if (req.session.userID) {
+  const user = users[req.session.userID];
+  if (user) {
     res.redirect('/urls');
     return;
   }
 
   const templateVars = {user: users[req.session.userID]};
-  res.render('urls_registration', templateVars);
+  res.render('urls_register', templateVars);
 });
 
 // registering - POST
